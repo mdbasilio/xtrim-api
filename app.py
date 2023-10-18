@@ -1,4 +1,5 @@
 from flask import request, jsonify
+from flask_cors import CORS
 from flask_mysqldb import MySQL
 from flask_openapi3 import OpenAPI, Info, Tag
 import requests
@@ -21,6 +22,7 @@ app_config = config['development']
 
 info = Info(title="API XTRIMIR", version="1.0.0")
 app = OpenAPI(__name__, info=info)
+CORS(app)
 
 app.config['MYSQL_HOST'] = app_config.MYSQL_HOST
 app.config['MYSQL_USER'] = app_config.MYSQL_USER
@@ -119,10 +121,20 @@ class RolesResponse(BaseModel):
          })
 def get_imagenes(query: ImgQuery):
     try:
-        app.logger.debug("Inicio get_imagenes")
+        app.logger.info("Inicio get_imagenes")
 
-        carpetas = obtener_rutas_por_prefijo('RUTA_PLANES')
-        logging.info(f"Carpetas {carpetas}")
+        type_param = request.args.get('type')
+        if type_param == '1':
+            img_directory = app_config.RUTA_PLANES
+        elif type_param == '2':
+            img_directory = app_config.RUTA_PROMO
+        else:
+            app.logger.warning("Valor del parametro no admitido")
+            return jsonify({"code": 400, "message": "Bad Request", "data": "Valor del parametro no admitido"})
+
+        carpetas = obtener_rutas_por_prefijo(img_directory)
+
+        app.logger.info(f"Numero de registros db: {len(carpetas)}")
 
         img_data_list = []
         index = 0
@@ -131,35 +143,32 @@ def get_imagenes(query: ImgQuery):
             index += 1
 
             img_list = [f for f in os.listdir(carpeta) if f.endswith(('.jpg', '.jpeg', '.png', '.gif'))]
-            logging.info(f"Imagenes {img_list}")
 
             for img_filename in img_list:
                 img_path = os.path.join(carpeta, img_filename)
-                logging.info(f"Imagen Individual {img_path}")
 
                 nombre_archivo, extension = os.path.splitext(img_filename)
                 
                 with open(img_path, 'rb') as img_file:
                         img_data = img_file.read()
                         img_base64 = base64.b64encode(img_data).decode('utf-8')
-                        logging.info(f"Imagen base64 {img_base64}")
                     
+                        subcarpeta = os.path.basename(carpeta)
+
                         img_data_list.append({
                                 'nombre': nombre_archivo,
+                                'categoria': subcarpeta,
                                 'img_base64': img_base64,
                                 'tipoImg': index
                             })
 
-
         return jsonify({"code": 200, "message": "OK", "data": img_data_list})
 
-
-        #return jsonify({"code": 200, "message": "OK", "data": carpetas})
     except Exception as e:
         # Manejo de errores generales
         return jsonify({"code": 500, "message": "Internal Server Error", "data": str(e)})
     finally:
-        app.logger.debug("Fin get_imagenes")
+        app.logger.info("Fin get_imagenes")
 
 
 ALLOWED_URL_PREFIX = "http"
