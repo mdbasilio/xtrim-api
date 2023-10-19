@@ -5,7 +5,7 @@ class Config:
 class DevelomentConfig(Config):
     DEBUG = True
     # Configuración BD
-    MYSQL_HOST = 'localhost'
+    MYSQL_HOST = '127.0.0.1'
     MYSQL_USER = 'devpy'
     MYSQL_PASSWORD = 'P@s5word*123'
     MYSQL_DB = 'db_appxtrim'

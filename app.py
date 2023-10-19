@@ -106,17 +106,19 @@ class ImgQuery(BaseModel):
     type: int = Field(..., description='Tipo', example=1)
 
 class ImgModel(BaseModel):
+    categoria: str
+    tipoImg: int
     nombre: str
-    url_b64: str
+    img_base64: str
 
-class RolesResponse(BaseModel):
+class ImagesResponse(BaseModel):
     code: int = Field(0, description="Código de estado")
     message: str = Field("OK", description="Mensaje de respuesta")
     data: ImgModel
 
 @app.get('/get_imagenes', summary="Lista de imagenes", tags=[img_tag],
          responses = {
-            200: RolesResponse,
+            200: ImagesResponse,
             422: None           
          })
 def get_imagenes(query: ImgQuery):
@@ -166,6 +168,7 @@ def get_imagenes(query: ImgQuery):
 
     except Exception as e:
         # Manejo de errores generales
+        app.logger.error(f"Solicitud get_imagenes: {str(e)}")
         return jsonify({"code": 500, "message": "Internal Server Error", "data": str(e)})
     finally:
         app.logger.info("Fin get_imagenes")
@@ -173,7 +176,25 @@ def get_imagenes(query: ImgQuery):
 
 ALLOWED_URL_PREFIX = "http"
 
-@app.route('/descargar_archivo', methods=['POST'])
+download_tag = Tag(name="Descarga", description="Permite la descarga de archivo")
+
+class DownloadBody(BaseModel):
+    ruta: str = Field(..., description='Especifica la ruta del archivo', example="\\\\10.0.0.10\\myfolder\\myfile.pdf")
+
+class DownloadModel(BaseModel):
+    pdf_base64: str
+
+class DownloadResponse(BaseModel):
+    code: int = Field(0, description="Código de estado")
+    message: str = Field("OK", description="Mensaje de respuesta")
+    data: DownloadModel
+
+@app.post('/descargar_archivo', tags=[download_tag], 
+           responses = {
+            200: DownloadResponse,
+            422: None           
+         })
+#@app.route('/descargar_archivo', methods=['POST'])
 def descargar_archivo():
     # Obtén la ruta del archivo PDF desde la solicitud POST
     pdf_path = request.json.get('ruta')
@@ -295,5 +316,5 @@ def upload_file():
 
 if __name__ == '__main__':
     app.config.from_object(config['development'])
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
  
