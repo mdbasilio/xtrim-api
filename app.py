@@ -196,7 +196,7 @@ class DownloadResponse(BaseModel):
             422: None           
          })
 #@app.route('/descargar_archivo', methods=['POST'])
-def descargar_archivo():
+def descargar_archivo(body: DownloadBody):
     # Obtén la ruta del archivo PDF desde la solicitud POST
     file_path = request.json.get('ruta')
 
@@ -244,6 +244,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+upload_tag = Tag(name="Subir Archivos", description="Permite la carga de archivos")
  
 class UploadFileForm(BaseModel):
     archivos: FileStorage
@@ -251,7 +252,7 @@ class UploadFileForm(BaseModel):
     ruta: str = Field(None, description="Ruta donde se subiran los archivos")
 
 #@app.route('/subir_archivos', methods=['POST'])
-@app.post('/subir_archivos')
+@app.post('/subir_archivos', tags=[upload_tag])
 def upload_file(form: UploadFileForm):
     try:
         ruta_destino = request.form.get('ruta')  # Obtiene la ruta de destino del cuerpo del request
