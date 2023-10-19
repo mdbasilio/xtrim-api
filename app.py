@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from flask_cors import CORS
 from flask_mysqldb import MySQL
-from flask_openapi3 import OpenAPI, Info, Tag
+from flask_openapi3 import OpenAPI, Info, Tag, FileStorage
 import requests
 from pydantic import BaseModel, Field
 from config import config
@@ -182,7 +182,8 @@ class DownloadBody(BaseModel):
     ruta: str = Field(..., description='Especifica la ruta del archivo', example="\\\\10.0.0.10\\myfolder\\myfile.pdf")
 
 class DownloadModel(BaseModel):
-    pdf_base64: str
+    file_base64: str
+    file_name: str
 
 class DownloadResponse(BaseModel):
     code: int = Field(0, description="Código de estado")
@@ -197,42 +198,43 @@ class DownloadResponse(BaseModel):
 #@app.route('/descargar_archivo', methods=['POST'])
 def descargar_archivo():
     # Obtén la ruta del archivo PDF desde la solicitud POST
-    pdf_path = request.json.get('ruta')
+    file_path = request.json.get('ruta')
 
-    if not pdf_path:
-        return jsonify({"error": "La ruta del PDF no se proporcionó en el cuerpo de la solicitud."}), 400
+    if not file_path:
+        return jsonify({"error": "La ruta del archivo no se proporcionó en el cuerpo de la solicitud."}), 400
 
-    logging.info('Solicitud de descarga de PDF - Ruta del archivo: %s', pdf_path)
+    logging.info('Solicitud de descarga de archivo - Ruta del archivo: %s', file_path)
 
     try:
         # Verificar si la ruta es una URL (comienza con "http")
-        if pdf_path.startswith(ALLOWED_URL_PREFIX):
-            response = requests.get(pdf_path)
+        if file_path.startswith(ALLOWED_URL_PREFIX):
+            response = requests.get(file_path)
             if response.status_code == 200:
-                pdf_base64 = base64.b64encode(response.content).decode('utf-8')
-                return jsonify({"pdf_base64": pdf_base64}), 200
+                file_base64 = base64.b64encode(response.content).decode('utf-8')
+                file_name = os.path.basename(file_path)
+                return jsonify({"file_name": file_name, "file_base64": file_base64}), 200
             else:
-                return jsonify({"error": "No se pudo obtener el archivo PDF de la URL proporcionada."}), 404
+                return jsonify({"error": "No se pudo obtener el archivo de la URL proporcionada."}), 404
         else:
             # Verifica si el archivo PDF existe en la ruta compartida
-            if not os.path.exists(pdf_path):
-                return jsonify({"error": "El archivo PDF no se encuentra en la ruta especificada."}), 404
+            if not os.path.exists(file_path):
+                return jsonify({"error": "El archivo archivo no se encuentra en la ruta especificada."}), 404
 
             # Abre el archivo PDF y lo convierte en una cadena Base64
-            with open(pdf_path, 'rb') as pdf_file:
-                pdf_base64 = base64.b64encode(pdf_file.read()).decode('utf-8')
+            with open(file_path, 'rb') as pdf_file:
+                file_base64 = base64.b64encode(pdf_file.read()).decode('utf-8')
+                file_name = os.path.basename(file_path)
 
-            return jsonify({"pdf_base64": pdf_base64}), 200
+            return jsonify({"file_name": file_name, "file_base64": file_base64}), 200
 
     except Exception as e:
         logging.error('Solicitud de carga de archivos - Error: %s', str(e))
-        return jsonify({"error": f"Se produjo un error al convertir el PDF a Base64: {str(e)}"}), 500
+        return jsonify({"error": f"Se produjo un error al convertir el archivo a Base64: {str(e)}"}), 500
     finally:
         logging.info("Fin descargar_archivo")
 
-# Establece la carpeta de destino para la subida de archivos
-UPLOAD_FOLDER = 'static/uploads' # Carpeta de destino por defecto
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
  
 ALLOWED_EXTENSIONS = set(['pdf', 'doc', 'jpg', 'png'])
@@ -240,10 +242,17 @@ ALLOWED_EXTENSIONS = set(['pdf', 'doc', 'jpg', 'png'])
 # Función para verificar si la extensión de un archivo es válida
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
- 
 
-@app.route('/subir_archivos', methods=['POST'])
-def upload_file():
+
+ 
+class UploadFileForm(BaseModel):
+    archivos: FileStorage
+    cedula: str = Field(None, description="Número de cedula")
+    ruta: str = Field(None, description="Ruta donde se subiran los archivos")
+
+#@app.route('/subir_archivos', methods=['POST'])
+@app.post('/subir_archivos')
+def upload_file(form: UploadFileForm):
     try:
         ruta_destino = request.form.get('ruta')  # Obtiene la ruta de destino del cuerpo del request
 
