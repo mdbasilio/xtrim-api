@@ -14,6 +14,20 @@ class DevelomentConfig(Config):
     RUTA_PLANES = 'RUTA_PLANES'
     RUTA_PROMO = 'RUTA_PROMO'
 
+class ProductionConfig(Config):
+    DEBUG = True
+    # Configuración BD
+    MYSQL_HOST = '192.168.21.18'
+    MYSQL_USER = 'usr_ecomerce'
+    MYSQL_PASSWORD = 'usr_ecomerce'
+    MYSQL_DB = 'ecomerce'
+
+    # Rutas de los directorios de imágenes
+    RUTA_PLANES = 'RUTA_PLANES'
+    RUTA_PROMO = 'RUTA_PROMO'
+
+
 config = {
-    'development' : DevelomentConfig
+    'development' : DevelomentConfig,
+    'prod' : ProductionConfig
 }

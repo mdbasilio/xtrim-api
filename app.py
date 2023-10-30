@@ -18,9 +18,11 @@ logging.basicConfig(filename=log_filename, level=logging.DEBUG, format=log_forma
 
 
 #Instancia
-app_config = config['development']  
+#stage = config['development']
+stage = config['prod']
+app_config = stage  
 
-info = Info(title="API XTRIMIR", version="1.0.0")
+info = Info(title="api-mixtrim-ms", version="1.0.0")
 app = OpenAPI(__name__, info=info)
 CORS(app)
 
@@ -36,7 +38,7 @@ def Index():
     return 'Inicio Api Xtrim'
 
 def get_roles_from_db():
-    sql = "SELECT * FROM db_appxtrim.roles"
+    sql = "SELECT * FROM db_appxtrim.app_roles"
     cursor = db.connection.cursor()
     cursor.execute(sql)
     column_names = [desc[0] for desc in cursor.description]
@@ -325,6 +327,6 @@ def upload_file(form: UploadFileForm):
 
 
 if __name__ == '__main__':
-    app.config.from_object(config['development'])
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    app.config.from_object(stage)
+    app.run(host='0.0.0.0', port=2073, debug=True)
  
