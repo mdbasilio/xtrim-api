@@ -13,6 +13,7 @@ class DevelomentConfig(Config):
     # Rutas de los directorios de imágenes
     RUTA_PLANES = 'RUTA_PLANES'
     RUTA_PROMO = 'RUTA_PROMO'
+    RUTA_SEGURIDAD = 'RUTA_SEGURIDAD'
 
 class ProductionConfig(Config):
     DEBUG = True
@@ -25,7 +26,7 @@ class ProductionConfig(Config):
     # Rutas de los directorios de imágenes
     RUTA_PLANES = 'RUTA_PLANES'
     RUTA_PROMO = 'RUTA_PROMO'
-
+    RUTA_SEGURIDAD = 'RUTA_SEGURIDAD'
 
 config = {
     'development' : DevelomentConfig,

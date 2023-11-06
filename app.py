@@ -18,8 +18,8 @@ logging.basicConfig(filename=log_filename, level=logging.DEBUG, format=log_forma
 
 
 #Instancia
-#stage = config['development']
-stage = config['prod']
+stage = config['development']
+#stage = config['prod']
 app_config = stage  
 
 info = Info(title="api-mixtrim-ms", version="1.0.0")
@@ -132,6 +132,8 @@ def get_imagenes(query: ImgQuery):
             img_directory = app_config.RUTA_PLANES
         elif type_param == '2':
             img_directory = app_config.RUTA_PROMO
+        elif type_param == '3':
+            img_directory = app_config.RUTA_SEGURIDAD
         else:
             app.logger.warning("Valor del parametro no admitido")
             return jsonify({"code": 400, "message": "Bad Request", "data": "Valor del parametro no admitido"})
@@ -146,7 +148,7 @@ def get_imagenes(query: ImgQuery):
         for carpeta in carpetas:
             index += 1
 
-            img_list = [f for f in os.listdir(carpeta) if f.endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+            img_list = [f for f in os.listdir(carpeta) if f.endswith(('.jpg', '.jpeg', '.png', '.gif', '.svg'))]
 
             for img_filename in img_list:
                 img_path = os.path.join(carpeta, img_filename)
